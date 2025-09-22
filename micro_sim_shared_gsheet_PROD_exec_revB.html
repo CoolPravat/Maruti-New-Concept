@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Micro-Simulation Concept Car Design: Product Management</title>
+<style>
+  :root{ --bg:#0b1020; --card:#121a34; --accent:#66e0ff; --accent2:#7cf59d; --warn:#ffc857; --text:#eaf2ff; --muted:#9fb0d1; --radius:18px; --shadow: 0 10px 30px rgba(0,0,0,.35), 0 2px 10px rgba(0,0,0,.3);}
+  body{margin:0;font-family:Inter,system-ui;background:#0b1020;color:var(--text);}
+  .wrap{max-width:1200px;margin:40px auto;padding:0 20px;}
+  header{background:linear-gradient(180deg,rgba(102,224,255,.18),rgba(102,224,255,.06));border:1px solid rgba(102,224,255,.25);box-shadow:var(--shadow);border-radius:var(--radius);padding:26px 28px}
+  .title{font-size:clamp(20px,2.6vw,34px);font-weight:800;letter-spacing:.4px;margin:0;background:linear-gradient(90deg,#eaf2ff,#9fe8ff,#b6ffd2);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .subtitle{margin:8px 0 0;color:var(--muted)}
+  .grid{display:grid;gap:18px} .grid-cols-3{grid-template-columns:repeat(3,1fr)} @media(max-width:980px){.grid-cols-3{grid-template-columns:1fr 1fr}} @media(max-width:720px){.grid-cols-3{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.005));border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 10px;font-size:16px;color:#cfe6ff}
+  label{display:block;font-size:12px;color:#b9c9e8;margin:12px 0 6px}
+  select,.pillset,input[type=text]{width:100%;background:#0e1730;color:var(--text);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:12px}
+  .pillset{display:flex;gap:8px;flex-wrap:wrap;padding:10px} .pill{cursor:pointer;border-radius:999px;padding:7px 12px;font-size:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)} .pill.active{background:linear-gradient(90deg,rgba(102,224,255,.25),rgba(124,245,157,.25));border-color:rgba(124,245,157,.6)}
+  .btnbar{display:flex;gap:12px;flex-wrap:wrap} button{border:none;border-radius:12px;padding:12px 16px;color:#091225;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));cursor:pointer;box-shadow:var(--shadow)} button.secondary{background:rgba(255,255,255,.06);color:#d7e6ff;border:1px solid rgba(255,255,255,.14)}
+  .score-ring{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:28px;margin-right:14px;border:6px solid rgba(255,255,255,.06);background:conic-gradient(var(--accent2) 0deg, rgba(255,255,255,.08) 0deg 360deg)}
+  .tabs{display:flex;gap:10px;margin-bottom:12px} .tabbtn{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#cfe6ff;padding:10px 14px;border-radius:999px;cursor:pointer} .tabbtn.active{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#091225;font-weight:800}
+  .hidden{display:none} .tag{display:inline-block;margin:4px 6px 0 0;padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:11px;color:#cfe6ff}
+  table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid rgba(255,255,255,.08);padding:10px;text-align:left;font-size:14px} th{color:#b6ffd2;font-weight:700}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="tabs">
+      <button id="tabSimBtn" class="tabbtn active">Simulation</button>
+      <button id="tabLbBtn" class="tabbtn">Leaderboard</button>
+    </div>
+
+    <header>
+      <h1 class="title">Concept Car Designer Micro-Sim: Product Management</h1>
+      <p class="subtitle">You are part of a <b>Concept Development Team at Maruti Suzuki</b> tasked to propose a new car concept for the Indian market. Design, balancing customer aspirations with business realism. Once designed, your concept will be evaluated, scored, and compared. <b> Steps to be followed:</b> Enter Name/ID → Make choices:(Segment → Subclass & Powertrain → Price .... Concept Name) → Evaluate (get score + auto-feedback) → Add to Leaderboard → Export Summary for submission if required. 
+    </header>
+
+    <div id="tab-sim">
+      <div class="grid grid-cols-3" style="margin-top:18px">
+        <section class="card"><h3>0) Team</h3><label for="team">Team Name / ID</label><input id="team" type="text" placeholder="e.g., Team Aurora (Sec A)" /></section>
+        <section class="card"><h3>1) Target Segment</h3><label for="segment">Who are you building for?</label>
+          <select id="segment"><option value="">— choose —</option><option>Urban Gen-Z first-time buyers</option><option>Rural aspirational middle class</option><option>Upper-middle premium SUV buyers</option><option>Fleet / commercial buyers</option></select></section>
+        <section class="card"><h3>2) Product Subclass & Powertrain</h3><label for="subclass">Body / category</label>
+          <select id="subclass"><option value="">— choose —</option><option>Hatchback</option><option>Micro-SUV</option><option>Compact SUV</option><option>MPV</option><option>Sedan</option><option>EV (Battery Electric)</option></select>
+          <label for="powertrain">Core Powertrain</label>
+          <select id="powertrain"><option value="">— choose —</option><option>Petrol</option><option>Petrol + Mild-Hybrid</option><option>Strong Hybrid</option><option>CNG</option><option>Battery-EV</option></select></section>
+      </div>
+
+      <div class="grid grid-cols-3" style="margin-top:18px">
+        <section class="card"><h3>3) Price Positioning</h3><label for="price">Ex-showroom price band</label>
+          <select id="price"><option value="">— choose —</option><option>Entry (&lt; ₹7L)</option><option>Mid (₹7–12L)</option><option>Premium (₹12–20L)</option><option>High-end (&gt; ₹20L)</option></select></section>
+        <section class="card"><h3>4) Sales Channel & Promo</h3><label for="channel">Where will you sell?</label>
+          <select id="channel"><option value="">— choose —</option><option>Arena</option><option>NEXA</option><option>Commercial</option></select>
+          <label for="promo">Promo Angle (primary)</label>
+          <select id="promo"><option value="">— choose —</option><option>Value &amp; Savings</option><option>Safety First</option><option>Tech &amp; Connected</option><option>Eco / Green Mobility</option><option>Premium Lifestyle</option></select></section>
+        <section class="card"><h3>5) Features</h3>
+          <div id="feat_safety" class="pillset" data-max="3"><span class="pill">2 Airbags</span><span class="pill">6 Airbags</span><span class="pill">ABS + EBD</span><span class="pill">ESP / ESC</span><span class="pill">ADAS L1 (AEB, LDW)</span></div>
+          <div style="height:8px"></div>
+          <div id="feat_comfort" class="pillset" data-max="4"><span class="pill">8&quot; Infotainment</span><span class="pill">10.25&quot; Infotainment</span><span class="pill">Wireless CarPlay/AA</span><span class="pill">Connected Car (App)</span><span class="pill">Rear AC Vents</span><span class="pill">Ventilated Front Seats</span><span class="pill">360° Camera</span><span class="pill">Sunroof / Pano</span></div>
+          <div style="height:8px"></div>
+          <div id="feat_style" class="pillset" data-max="3"><span class="pill">Alloy Wheels</span><span class="pill">LED Headlamps</span><span class="pill">High GC / Skid Plates</span><span class="pill">Dual-tone Interiors</span><span class="pill">Modular Seats</span><span class="pill">Large Boot (&gt;380L)</span></div>
+          <label for="name" style="margin-top:10px">Concept Name</label><input id="name" type="text" placeholder="e.g., Maruti NovaX" /></section>
+      </div>
+
+      <section class="card" style="margin-top:18px">
+        <div style="display:flex;gap:14px;align-items:center">
+          <div id="ring" class="score-ring">--</div>
+          <div><div style="font-weight:800;font-size:18px">Total Score: <span id="score">—</span> / 100 <span id="band" class="band">—</span></div>
+            <div class="grid" style="grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px">
+              <div><b>Fit</b> <span id="s1">—</span></div><div><b>Diff</b> <span id="s2">—</span></div><div><b>Mix</b> <span id="s3">—</span></div><div><b>Real</b> <span id="s4">—</span></div><div><b>Creat</b> <span id="s5">—</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="btnbar" style="margin-top:14px">
+          <button id="eval">Evaluate</button>
+          <button class="secondary" id="addToLb">Add to Leaderboard</button>
+          <button class="secondary" id="reset">Reset</button>
+          <button class="secondary" id="export">Copy / Download Summary</button>
+          <span id="status" class="status" aria-live="polite"></span>
+        </div>
+        <ul id="comments" style="margin-top:10px"></ul>
+        <div id="tags" style="margin-top:8px"></div>
+      </section>
+
+      <details class="card" style="margin-top:18px">
+        <summary>Run Self-Tests</summary>
+        <div id="testOutput" class="hint"></div>
+        <div class="btnbar" style="margin-top:10px"><button class="secondary" id="runTests">Run Self-Tests</button></div>
+      </details>
+    </div>
+
+    <div id="tab-lb" class="hidden">
+      <section class="card" style="margin-top:18px">
+        <h3>Leaderboard</h3>
+        <div class="btnbar" style="margin-bottom:10px"><button id="exportCsv">Export CSV</button><button class="secondary" id="clearLb">Clear Leaderboard</button></div>
+        <table id="lbTable"><thead><tr><th>#</th><th>Team</th><th>Round</th><th>Score</th><th>Concept</th><th>Segment</th><th>Subclass</th><th>Channel</th></tr></thead><tbody></tbody></table>
+      </section>
+    </div>
+
+    <p class="hint" style="color:#9fb0d1;margin-top:14px">© 2025 micro-simulation |<b> Concept Car Designer</b> | Dr. Pravat Surya Kar <p>
+  </div>
+
+<script>
+const model={weights:{fit:25,diff:20,mix:20,real:20,creat:15},
+fitRules:{"Urban Gen-Z first-time buyers":{price:["Entry (< ₹7L)","Mid (₹7–12L)"],subclass:["Hatchback","Micro-SUV"],channel:["Arena","NEXA"],power:["Petrol","Petrol + Mild-Hybrid","CNG"],mustAny:["Wireless CarPlay/AA","Connected Car (App)"]},
+"Rural aspirational middle class":{price:["Entry (< ₹7L)","Mid (₹7–12L)"],subclass:["Hatchback","Micro-SUV","Compact SUV","MPV"],channel:["Arena"],power:["Petrol","CNG"],mustAny:["High GC / Skid Plates","Large Boot (>380L)"]},
+"Upper-middle premium SUV buyers":{price:["Premium (₹12–20L)","High-end (> ₹20L)"],subclass:["Compact SUV","MPV","EV (Battery Electric)"],channel:["NEXA"],power:["Petrol + Mild-Hybrid","Strong Hybrid","Battery-EV"],mustAny:["6 Airbags","ADAS L1 (AEB, LDW)","Sunroof / Pano"]},
+"Fleet / commercial buyers":{price:["Entry (< ₹7L)","Mid (₹7–12L)"],subclass:["Sedan","MPV","Hatchback"],channel:["Commercial"],power:["Petrol","CNG"],mustAny:["Large Boot (>380L)","Modular Seats"]}},
+overlaps:[{name:"Swift/Alto/WagonR",subclass:"Hatchback",price:"Entry (< ₹7L)",channel:"Arena"},{name:"Brezza/S-Presso",subclass:"Micro-SUV",price:"Mid (₹7–12L)",channel:"Arena"},{name:"Grand Vitara/Baleno/Fronx (upper)",subclass:"Compact SUV",price:"Premium (₹12–20L)",channel:"NEXA"},{name:"Dzire",subclass:"Sedan",price:"Mid (₹7–12L)",channel:"Arena"},{name:"Ertiga/XL6",subclass:"MPV",price:"Mid (₹7–12L)",channel:"Arena"}]};
+// === Rev B Helpers & Guardrail ===
+const REQUIRED_FIELDS = ["segment","subclass","power","price","channel","promo"];
+
+function missingRequired(sel){
+  return REQUIRED_FIELDS.some(k => !sel[k] || String(sel[k]).trim() === "");
+}
+
+function normPrice(p){
+  const t = String(p||"").toLowerCase();
+  if (t.includes("entry")) return "Entry";
+  if (t.includes("high") || t.includes(">")) return "High";
+  if (t.includes("premium") || t.includes("12–20") || t.includes("12-20")) return "Premium";
+  if (t.includes("mid") || t.includes("7–12") || t.includes("7-12")) return "Mid";
+  return p || "";
+}
+
+function scale(p,maxRaw,w){return Math.round((p/maxRaw)*w);}
+
+
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+function getSelections(){const g=id=>$$("#"+id+" .pill.active").map(x=>x.textContent.trim());return{team:$("#team").value.trim()||"(Team)",name:$("#name").value.trim()||"(unnamed concept)",segment:$("#segment").value,subclass:$("#subclass").value,power:$("#powertrain").value,price:$("#price").value,channel:$("#channel").value,promo:$("#promo").value,safety:g("feat_safety"),comfort:g("feat_comfort"),style:g("feat_style")};}
+function ring(score){const deg=Math.round((score/100)*360);const el=$("#ring");el.style.background=`conic-gradient(var(--accent2) ${deg}deg, rgba(255,255,255,.08) ${deg}deg 360deg)`;el.textContent=Math.round(score);}
+function band(score){const el=$("#band");el.className='band ' + (score<60? 'red' : score<80? 'amber':'green');el.textContent=score<60? 'Weak' : score<80? 'Okay' : 'Strong';}
+$$(".pillset").forEach(set=>{set.addEventListener('click',e=>{const max=Number(set.dataset.max||99);if(e.target.classList.contains('pill')){const c=set.querySelectorAll('.pill.active').length;if(!e.target.classList.contains('active')&&c>=max){set.style.boxShadow='0 0 0 2px var(--warn) inset';setTimeout(()=> set.style.boxShadow='none',350);return;}e.target.classList.toggle('active');}})});
+function scoreFit(sel){const r=model.fitRules[sel.segment];if(!r) return 0;let fit=0,base=5;const add=c=>{if(c) fit+=5};add(r.price.includes(sel.price));add(r.subclass.includes(sel.subclass));add(r.channel.includes(sel.channel));add(r.power.includes(sel.power));const all=[...sel.safety,...sel.comfort,...sel.style];add(all.some(f=>r.mustAny.includes(f)));return base+fit;}
+function scoreDiff(sel){
+  // Start at 0; earn points; penalize clone overlaps
+  let s = 0;
+  // Encouraged nudges
+  if (sel.subclass === "EV (Battery Electric)" && sel.channel === "NEXA") s += 2;
+  if (sel.power === "Strong Hybrid" && !String(sel.price).toLowerCase().includes("entry")) s += 2;
+  if (sel.subclass === "Micro-SUV" && sel.power === "CNG") s += 1;
+
+  // Overlap penalty based on your overlaps list: Subclass + Price + Channel
+  for (const o of model.overlaps){
+    if (o.subclass===sel.subclass && o.price===sel.price && o.channel===sel.channel){ s -= 10; break; }
+  }
+
+  return Math.max(0, Math.min(22, s)); // raw, will be scaled to 20
+}
+function scoreMix(sel){let s=0;const has=(arr,x)=>arr.some(f=>f.includes(x));if(sel.promo==="Safety First"&&(has(sel.safety,"6 Airbags")||has(sel.safety,"ADAS"))) s+=6;if(sel.promo==="Tech & Connected"&&(has(sel.comfort,"Connected")||has(sel.comfort,"Wireless"))) s+=6;if(sel.promo==="Eco / Green Mobility"&&(sel.power.includes("Hybrid")||sel.power.includes("EV"))) s+=6;if(sel.promo==="Premium Lifestyle"&&(has(sel.comfort,"Ventilated")||has(sel.comfort,"Sunroof")||has(sel.comfort,"360°"))) s+=6;if(sel.promo==="Value & Savings"&&(sel.price.includes("Entry")||sel.price.includes("Mid"))) s+=6;if(sel.channel==="NEXA"&&(sel.price.includes("Premium")||sel.price.includes("High"))) s+=4;if(sel.channel==="Arena"&&(sel.price.includes("Entry")||sel.price.includes("Mid"))) s+=4;if(sel.channel==="Commercial"&&(sel.segment.includes("Fleet")||sel.price.includes("Entry")||sel.price.includes("Mid"))) s+=4;if(sel.subclass.includes("SUV")&&(has(sel.style,"High GC")||has(sel.style,"Skid"))) s+=4;return Math.min(24,s);}
+function scoreRealism(sel){
+  // If incomplete core inputs, realism = 0
+  if (missingRequired(sel)) return 0;
+
+  let s = 20;
+  const priceIs = normPrice(sel.price);
+  const isEntry = priceIs === "Entry";
+
+  const has = (arr,x)=> Array.isArray(arr) && arr.some(f=>String(f).toLowerCase().includes(x.toLowerCase()));
+
+  // Penalties
+  const premiumSafety = has(sel.safety,"6 airbag") || has(sel.safety,"adas") || has(sel.comfort,"sunroof");
+  if (isEntry && premiumSafety) s -= 6;
+  if (sel.channel === "NEXA" && isEntry) s -= 5;
+  if (sel.channel === "Commercial" && (String(sel.subclass).includes("EV") || sel.promo === "Premium Lifestyle")) s -= 4;
+  if (String(sel.power).toLowerCase().includes("battery") && isEntry) s -= 8;
+
+  return Math.max(0, s);
+}
+function scoreCreativity(sel){
+  let s = 0; // no baseline
+  const nm = (sel.name || "").trim().toLowerCase();
+  if (nm && nm !== "(unnamed concept)" && !nm.includes("maruti")) s += 2;
+
+  const isEV = String(sel.subclass).includes("EV") || String(sel.power).toLowerCase().includes("battery");
+  if (isEV && sel.promo === "Eco / Green Mobility") s += 3;
+  if (sel.subclass === "Micro-SUV" && sel.promo === "Tech & Connected") s += 2;
+  const isGenZ = String(sel.segment).toLowerCase().includes("gen-z");
+  const isMid = normPrice(sel.price) === "Mid";
+  const isMild = String(sel.power).includes("Mild-Hybrid") || String(sel.power).includes("Mild Hybrid");
+  if (isGenZ && isMid && isMild) s += 2;
+
+  return Math.min(17, s);
+}
+function scale(p,maxRaw,w){return Math.round((p/maxRaw)*w);}
+function evaluate(){
+  const sel = getSelections();
+
+  // Guardrail: If any core field missing, force zeros and instruct
+  if (missingRequired(sel)){
+    document.getElementById('s1').textContent = `0 / ${model.weights.fit}`;
+    document.getElementById('s2').textContent = `0 / ${model.weights.diff}`;
+    document.getElementById('s3').textContent = `0 / ${model.weights.mix}`;
+    document.getElementById('s4').textContent = `0 / ${model.weights.real}`;
+    document.getElementById('s5').textContent = `0 / ${model.weights.creat}`;
+    document.getElementById('score').textContent = 0;
+    ring(0); band(0);
+
+    const missing = ["segment","subclass","power","price","channel","promo"].filter(k => !sel[k] || String(sel[k]).trim()==="");
+    const ul=document.getElementById('comments');
+    ul.innerHTML='';
+    const li=document.createElement('li');
+    li.innerHTML = `Please complete: <b>${missing.join(", ")}</b> before evaluation.`;
+    ul.appendChild(li);
+    document.getElementById('tags').innerHTML = '';
+    return { total:0, parts:{p1:0,p2:0,p3:0,p4:0,p5:0}, sel, cmts:["Incomplete submission"] };
+  }
+
+  // Compute revised scores
+  const p1 = scale(scoreFit(sel),30,model.weights.fit);         // Fit stays as-is
+  const p2 = scale(scoreDiff(sel),22,model.weights.diff);       // Revised Diff
+  const p3 = scale(scoreMix(sel),24,model.weights.mix);         // Mix stays as-is
+  const p4 = scale(scoreRealism(sel),20,model.weights.real);    // Revised Realism
+  const p5 = scale(scoreCreativity(sel),17,model.weights.creat);// Revised Creativity
+  const total = p1+p2+p3+p4+p5;
+
+  document.getElementById('s1').textContent=`${p1} / ${model.weights.fit}`;
+  document.getElementById('s2').textContent=`${p2} / ${model.weights.diff}`;
+  document.getElementById('s3').textContent=`${p3} / ${model.weights.mix}`;
+  document.getElementById('s4').textContent=`${p4} / ${model.weights.real}`;
+  document.getElementById('s5').textContent=`${p5} / ${model.weights.creat}`;
+  document.getElementById('score').textContent=total;
+  ring(total); band(total);
+
+  const cmts=[];
+  if (p1>=20) cmts.push("Strong segment fit.");
+  if (p3>=14) cmts.push("Good mix coherence.");
+  if (p2>=12) cmts.push("Differentiation looks promising.");
+  if (p1<15) cmts.push("Segment mismatch — revisit price/channel/powertrain.");
+  if (p2<12) cmts.push("High cannibalisation risk — adjust subclass/channel.");
+  if (p4<14) cmts.push("Realism concerns at chosen price/channel.");
+  if (p5===0) cmts.push("Name your concept and create a tighter theme to earn creativity points.");
+
+  const ul=document.getElementById('comments');
+  ul.innerHTML='';
+  cmts.slice(0,6).forEach(c=>{const li=document.createElement('li');li.textContent=c;ul.appendChild(li);});
+
+  const tags=document.getElementById('tags');
+  tags.innerHTML='';
+  const all=[...sel.safety,...sel.comfort,...sel.style];
+  [sel.segment,sel.subclass,sel.power,sel.price,sel.channel,sel.promo,...all].filter(Boolean).forEach(t=>{
+    const span=document.createElement('span'); span.className='tag'; span.textContent=t; tags.appendChild(span);
+  });
+
+  return{total,parts:{p1,p2,p3,p4,p5},sel,cmts};
+}
+async function copyTextWithFallback(text){try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);return{method:'clipboard',ok:true}}throw new Error('Clipboard API unavailable')}catch(err){try{const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.top='-9999px';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();const success=document.execCommand&&document.execCommand('copy');document.body.removeChild(ta);if(success){return{method:'execCommand',ok:true}}throw new Error('execCommand failed')}catch(err2){try{const blob=new Blob([text],{type:'text/plain'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`ConceptSummary_${Date.now()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=> URL.revokeObjectURL(url),0);return{method:'download',ok:true}}catch(err3){return{method:'none',ok:false,error:err3}}}}}
+function buildSummary(r){const { sel, total, parts } = r;const lines=[`Team: ${sel.team}`,`Concept: ${sel.name}`,`Segment: ${sel.segment}`,`Subclass: ${sel.subclass} | Powertrain: ${sel.power}`,`Price: ${sel.price} | Channel: ${sel.channel} | Promo: ${sel.promo}`,`Features: Safety[${sel.safety.join(', ')}]; Comfort[${sel.comfort.join(', ')}]; Style[${sel.style.join(', ')}]`,`Score: ${total}/100 (Fit ${parts.p1}, Diff ${parts.p2}, Mix ${parts.p3}, Real ${parts.p4}, Creat ${parts.p5})`,'Comments:'].concat(r.cmts.map((c,i)=> `${i+1}. ${c}`));return lines.join('\\n');}
+const leaderboard=[];
+const SHEET_ENDPOINT="https://script.google.com/macros/s/AKfycbzpU0u6MLrv7X9LGuVrJ_rqedzxYL4ey6_hWPsTNSGJPesDX7nXX1waNF0qpf126MZl_w/exec"; window.CLASS_CODE=window.CLASS_CODE||"GIM-2025-PM";
+async function syncToSheet(entry){try{const payload={timestamp:Date.now(),...entry,class_code:(window.CLASS_CODE||'GIM-2025-PM'),user_agent:navigator.userAgent||''};await fetch(SHEET_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});}catch(e){console.warn('Sheet sync failed:',e);}}
+function addToLeaderboard(round){const r=evaluate();const { sel, total } = r;const entry={team:sel.team,round:Number(round)||(leaderboard.filter(e=>e.team===sel.team).length+1),score:total,concept:sel.name,segment:sel.segment,subclass:sel.subclass,channel:sel.channel};leaderboard.push(entry);renderLeaderboard();syncToSheet(entry);showTab('lb');}
+function renderLeaderboard(){const tbody=document.querySelector('#lbTable tbody');tbody.innerHTML='';const sorted=leaderboard.slice().sort((a,b)=> a.round===b.round ? b.score-a.score : a.round-b.round);sorted.forEach((e,i)=>{const tr=document.createElement('tr');tr.innerHTML = `<td>${i+1}</td><td>${e.team}</td><td>${e.round}</td><td>${e.score}</td><td>${e.concept}</td><td>${e.segment}</td><td>${e.subclass}</td><td>${e.channel}</td>`;tbody.appendChild(tr);});}
+function exportLeaderboardCSV(){const headers=['Team','Round','Score','Concept','Segment','Subclass','Channel'];const rows=leaderboard.map(e=>[e.team,e.round,e.score,e.concept,e.segment,e.subclass,e.channel]);const csv=[headers].concat(rows).map(r=> r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\\n');const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`Leaderboard_${Date.now()}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=> URL.revokeObjectURL(url), 0);}
+function showTab(which){const sim=document.getElementById('tab-sim'),lb=document.getElementById('tab-lb'),b1=document.getElementById('tabSimBtn'),b2=document.getElementById('tabLbBtn');if(which==='lb'){sim.classList.add('hidden');lb.classList.remove('hidden');b1.classList.remove('active');b2.classList.add('active');}else{lb.classList.add('hidden');sim.classList.remove('hidden');b2.classList.remove('active');b1.classList.add('active');}}
+document.getElementById('tabSimBtn').addEventListener('click',()=> showTab('sim'));
+document.getElementById('tabLbBtn').addEventListener('click',()=> showTab('lb'));
+document.getElementById('eval').addEventListener('click', evaluate);
+document.getElementById('addToLb').addEventListener('click', ()=> addToLeaderboard());
+document.getElementById('reset').addEventListener('click', ()=> window.location.reload());
+document.getElementById('export').addEventListener('click', async ()=>{const r = evaluate();const txt = buildSummary(r);const status = document.getElementById('status');const btn = document.getElementById('export');btn.disabled = true;const result = await copyTextWithFallback(txt);btn.textContent = result.ok ? 'Copied!' : 'Could not export';status.textContent = result.ok ? '(summary copied or downloaded)' : '(please copy manually)';setTimeout(()=>{btn.textContent='Copy / Download Summary';btn.disabled=false;status.textContent='';}, 1600);});
+document.getElementById('exportCsv').addEventListener('click', exportLeaderboardCSV);
+document.getElementById('clearLb').addEventListener('click', ()=>{ leaderboard.length=0; renderLeaderboard(); });
+function runSelfTests(){const out=document.getElementById('testOutput');const results=[];function t(n,fn){try{fn();results.push({name:n,pass:true});}catch(e){results.push({name:n,pass:false,err:String(e)});}}const sel1={team:'A',name:'NovaX',segment:'Urban Gen-Z first-time buyers',subclass:'Hatchback',power:'Petrol + Mild-Hybrid',price:'Mid (₹7–12L)',channel:'Arena',promo:'Tech & Connected',safety:['2 Airbags','ABS + EBD'],comfort:['Wireless CarPlay/AA','Connected Car (App)'],style:['Alloy Wheels']};t('Gen-Z fit ≥20/25',()=>{const p=scale(scoreFit(sel1),30,model.weights.fit);if(p<20) throw 'Expected ≥20, got '+p;});const sel2={...sel1,name:'EcoOne',subclass:'EV (Battery Electric)',power:'Battery-EV',price:'Entry (< ₹7L)',channel:'NEXA',promo:'Eco / Green Mobility'};t('Realism penalty for EV+Entry',()=>{const r=scoreRealism(sel2);if(r>=20) throw 'Expected realism <20';});const sel3={...sel1,price:'Entry (< ₹7L)',channel:'Arena'};t('Overlap penalty',()=>{const after=scoreDiff(sel3);if(after>20) throw 'Expected penalty';});out.innerHTML = results.map(r=>`<div class="${r.pass?'test-pass':'test-fail'}">${r.pass?'✔':'✖'} ${r.name} ${r.pass?'':' — '+r.err}</div>`).join('');}
+document.getElementById('runTests').addEventListener('click', runSelfTests);
+</script>
+</body>
+</html>
