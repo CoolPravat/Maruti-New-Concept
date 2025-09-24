@@ -102,7 +102,7 @@
   </div>
 
 <script>
-const model={weights:{fit:25,diff:20,mix:20,real:20,creat:15},
+const model={weights:{fit:25,diff:20,mix:25,real:15,creat:15},
 fitRules:{"Urban Gen-Z first-time buyers":{price:["Entry (< ₹7L)","Mid (₹7–12L)"],subclass:["Hatchback","Micro-SUV"],channel:["Arena","NEXA"],power:["Petrol","Petrol + Mild-Hybrid","CNG"],mustAny:["Wireless CarPlay/AA","Connected Car (App)"]},
 "Rural aspirational middle class":{price:["Entry (< ₹7L)","Mid (₹7–12L)"],subclass:["Hatchback","Micro-SUV","Compact SUV","MPV"],channel:["Arena"],power:["Petrol","CNG"],mustAny:["High GC / Skid Plates","Large Boot (>380L)"]},
 "Upper-middle premium SUV buyers":{price:["Premium (₹12–20L)","High-end (> ₹20L)"],subclass:["Compact SUV","MPV","EV (Battery Electric)"],channel:["NEXA"],power:["Petrol + Mild-Hybrid","Strong Hybrid","Battery-EV"],mustAny:["6 Airbags","ADAS L1 (AEB, LDW)","Sunroof / Pano"]},
@@ -134,21 +134,58 @@ function band(score){const el=$("#band");el.className='band ' + (score<60? 'red'
 $$(".pillset").forEach(set=>{set.addEventListener('click',e=>{const max=Number(set.dataset.max||99);if(e.target.classList.contains('pill')){const c=set.querySelectorAll('.pill.active').length;if(!e.target.classList.contains('active')&&c>=max){set.style.boxShadow='0 0 0 2px var(--warn) inset';setTimeout(()=> set.style.boxShadow='none',350);return;}e.target.classList.toggle('active');}})});
 function scoreFit(sel){const r=model.fitRules[sel.segment];if(!r) return 0;let fit=0,base=5;const add=c=>{if(c) fit+=5};add(r.price.includes(sel.price));add(r.subclass.includes(sel.subclass));add(r.channel.includes(sel.channel));add(r.power.includes(sel.power));const all=[...sel.safety,...sel.comfort,...sel.style];add(all.some(f=>r.mustAny.includes(f)));return base+fit;}
 function scoreDiff(sel){
-  // Start at 0; earn points; penalize clone overlaps
   let s = 0;
-  // Encouraged nudges
-  if (sel.subclass === "EV (Battery Electric)" && sel.channel === "NEXA") s += 2;
-  if (sel.power === "Strong Hybrid" && !String(sel.price).toLowerCase().includes("entry")) s += 2;
-  if (sel.subclass === "Micro-SUV" && sel.power === "CNG") s += 1;
+  // existing nudges
+  if (sel.subclass === "EV (Battery Electric)" && sel.channel === "NEXA") s += 5;
+  if (sel.power === "Strong Hybrid" && !String(sel.price).toLowerCase().includes("entry")) s += 5;
+  if (sel.subclass === "Micro-SUV" && sel.power === "CNG") s += 5;
 
-  // Overlap penalty based on your overlaps list: Subclass + Price + Channel
+  // softened overlap penalty (triple match)
+  let overlapped = false;
   for (const o of model.overlaps){
-    if (o.subclass===sel.subclass && o.price===sel.price && o.channel===sel.channel){ s -= 10; break; }
+    if (o.subclass===sel.subclass && o.price===sel.price && o.channel===sel.channel){
+      s -= 1;           // was −10
+      overlapped = true;
+      break;
+    }
   }
+
+  // novelty if no overlap on subclass+channel (ignores price)
+  const anySameSubChan = model.overlaps.some(o => o.subclass===sel.subclass && o.channel===sel.channel);
+  if (!anySameSubChan && !overlapped) s += 5;
+
+  // premium promo alignment
+  const isPrem = /Premium|High/.test(sel.price||"");
+  if (isPrem && (sel.promo==="Safety First" || sel.promo==="Premium Lifestyle")) s += 5;
 
   return Math.max(0, Math.min(22, s)); // raw, will be scaled to 20
 }
-function scoreMix(sel){let s=0;const has=(arr,x)=>arr.some(f=>f.includes(x));if(sel.promo==="Safety First"&&(has(sel.safety,"6 Airbags")||has(sel.safety,"ADAS"))) s+=6;if(sel.promo==="Tech & Connected"&&(has(sel.comfort,"Connected")||has(sel.comfort,"Wireless"))) s+=6;if(sel.promo==="Eco / Green Mobility"&&(sel.power.includes("Hybrid")||sel.power.includes("EV"))) s+=6;if(sel.promo==="Premium Lifestyle"&&(has(sel.comfort,"Ventilated")||has(sel.comfort,"Sunroof")||has(sel.comfort,"360°"))) s+=6;if(sel.promo==="Value & Savings"&&(sel.price.includes("Entry")||sel.price.includes("Mid"))) s+=6;if(sel.channel==="NEXA"&&(sel.price.includes("Premium")||sel.price.includes("High"))) s+=4;if(sel.channel==="Arena"&&(sel.price.includes("Entry")||sel.price.includes("Mid"))) s+=4;if(sel.channel==="Commercial"&&(sel.segment.includes("Fleet")||sel.price.includes("Entry")||sel.price.includes("Mid"))) s+=4;if(sel.subclass.includes("SUV")&&(has(sel.style,"High GC")||has(sel.style,"Skid"))) s+=4;return Math.min(24,s);}
+function scoreMix(sel){
+  let s=0;
+  const has=(arr,x)=>arr.some(f=>f.includes(x));
+  // promo-primary logics (unchanged)
+  if(sel.promo==="Safety First"&&(has(sel.safety,"6 Airbags")||has(sel.safety,"ADAS"))) s+=8;
+  if(sel.promo==="Tech & Connected"&&(has(sel.comfort,"Connected")||has(sel.comfort,"Wireless"))) s+=8;
+  if(sel.promo==="Eco / Green Mobility"&&(sel.power.includes("Hybrid")||sel.power.includes("EV"))) s+=8;
+  if(sel.promo==="Premium Lifestyle"&&(has(sel.comfort,"Ventilated")||has(sel.comfort,"Sunroof")||has(sel.comfort,"360°"))) s+=8;
+
+  // channel–price alignment (unchanged)
+  if(sel.channel==="NEXA"&&(/Premium|High/.test(sel.price))) s+=5;
+  if(sel.channel==="Arena"&&(/Entry|Mid/.test(sel.price))) s+=5;
+  if(sel.channel==="Commercial"&&(String(sel.segment).includes("Fleet")||/Entry|Mid/.test(sel.price))) s+=5;
+
+  // SUV styling synergy (unchanged)
+  if(sel.subclass.includes("SUV")&&(has(sel.style,"High GC")||has(sel.style,"Skid"))) s+=5;
+
+  // segment–promo alignment (+4)
+  const seg=(sel.segment||"").toLowerCase();
+  if ( (seg.includes("gen-z") && sel.promo==="Tech & Connected")
+    || (seg.includes("rural") && (sel.promo==="Value & Savings" || sel.promo==="Eco / Green Mobility"))
+    || (seg.includes("premium suv") && (sel.promo==="Safety First" || sel.promo==="Premium Lifestyle"))
+    || (seg.includes("fleet") && (sel.promo==="Value & Savings")) ) s += 5;
+
+  return Math.min(28,s); // new cap
+}
 function scoreRealism(sel){
   // If incomplete core inputs, realism = 0
   if (missingRequired(sel)) return 0;
@@ -159,29 +196,39 @@ function scoreRealism(sel){
 
   const has = (arr,x)=> Array.isArray(arr) && arr.some(f=>String(f).toLowerCase().includes(x.toLowerCase()));
 
-  // Penalties
+  // Softer penalties
   const premiumSafety = has(sel.safety,"6 airbag") || has(sel.safety,"adas") || has(sel.comfort,"sunroof");
-  if (isEntry && premiumSafety) s -= 6;
-  if (sel.channel === "NEXA" && isEntry) s -= 5;
-  if (sel.channel === "Commercial" && (String(sel.subclass).includes("EV") || sel.promo === "Premium Lifestyle")) s -= 4;
-  if (String(sel.power).toLowerCase().includes("battery") && isEntry) s -= 8;
+  if (isEntry && premiumSafety) s -= 1;                // was −6
+  if (sel.channel === "NEXA" && isEntry) s -= 1;       // was −5
+  if (sel.channel === "Commercial" && (String(sel.subclass).includes("EV") || sel.promo === "Premium Lifestyle")) s -= 1; // was −4
+  if (String(sel.power).toLowerCase().includes("battery") && isEntry) s -= 1; // was −8
 
-  return Math.max(0, s);
+  return Math.max(10, s); // floor at 8
 }
 function scoreCreativity(sel){
   let s = 0; // no baseline
   const nm = (sel.name || "").trim().toLowerCase();
-  if (nm && nm !== "(unnamed concept)" && !nm.includes("maruti")) s += 2;
+  if (nm && nm !== "(unnamed concept)" && !nm.includes("maruti")) s += 5;
 
   const isEV = String(sel.subclass).includes("EV") || String(sel.power).toLowerCase().includes("battery");
-  if (isEV && sel.promo === "Eco / Green Mobility") s += 3;
-  if (sel.subclass === "Micro-SUV" && sel.promo === "Tech & Connected") s += 2;
-  const isGenZ = String(sel.segment).toLowerCase().includes("gen-z");
-  const isMid = normPrice(sel.price) === "Mid";
-  const isMild = String(sel.power).includes("Mild-Hybrid") || String(sel.power).includes("Mild Hybrid");
-  if (isGenZ && isMid && isMild) s += 2;
+  if (isEV && sel.promo === "Eco / Green Mobility") s += 5;
+  if (sel.subclass === "Micro-SUV" && sel.promo === "Tech & Connected") s += 5;
 
-  return Math.min(17, s);
+  const seg=(sel.segment||"").toLowerCase();
+  const has=(arr,x)=> Array.isArray(arr) && arr.some(f=>String(f).toLowerCase().includes(x.toLowerCase()));
+
+  // name–promo cohesion
+  const nameEco = /\b(eco|green|leaf|terra)\b/.test(nm);
+  const nameTech = /\b(tech|x|proto|nova|sync)\b/.test(nm);
+  const nameSport = /\b(sport|rs|gt)\b/.test(nm);
+  if ((sel.promo==="Eco / Green Mobility" && nameEco) || (sel.promo==="Tech & Connected" && nameTech) || (sel.promo==="Premium Lifestyle" && nameSport)) s += 4;
+
+  // segment-unique add-ons
+  if (seg.includes("gen-z") && (has(sel.comfort,"Wireless") || has(sel.comfort,"Connected"))) s += 4;
+  if (seg.includes("rural") && (has(sel.style,"High GC") || has(sel.style,"Large Boot"))) s += 4;
+  if (seg.includes("fleet") && (has(sel.style,"Modular Seats") || has(sel.style,"Large Boot"))) s += 4;
+
+  return Math.min(22, s);
 }
 function scale(p,maxRaw,w){return Math.round((p/maxRaw)*w);}
 function evaluate(){
@@ -210,9 +257,9 @@ function evaluate(){
   // Compute revised scores
   const p1 = scale(scoreFit(sel),30,model.weights.fit);         // Fit stays as-is
   const p2 = scale(scoreDiff(sel),22,model.weights.diff);       // Revised Diff
-  const p3 = scale(scoreMix(sel),24,model.weights.mix);         // Mix stays as-is
+  const p3 = scale(scoreMix(sel), 28, model.weights.mix);         // Mix stays as-is
   const p4 = scale(scoreRealism(sel),20,model.weights.real);    // Revised Realism
-  const p5 = scale(scoreCreativity(sel),17,model.weights.creat);// Revised Creativity
+  const p5 = scale(scoreCreativity(sel), 22, model.weights.creat);// Revised Creativity
   const total = p1+p2+p3+p4+p5;
 
   document.getElementById('s1').textContent=`${p1} / ${model.weights.fit}`;
